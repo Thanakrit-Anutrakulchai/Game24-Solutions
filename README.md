@@ -2,7 +2,7 @@
 (Proof of) all possible starting quads and solutions to Game 24/Maths 24/24-Cards
 
 
-     Lists every single quads of four natural numbers from 0 to 9 inclusive that, once used exactly once each to multiply and
+Lists every single quads of four natural numbers from 0 to 9 inclusive that, once used exactly once each to multiply and
 add with each other, can result in 24 (as well as ones that can not). 
 
 
