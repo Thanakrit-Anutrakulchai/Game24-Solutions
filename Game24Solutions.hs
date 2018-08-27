@@ -18,14 +18,6 @@ eval (Sub m n) = (-) <$> eval m <*> eval n
 eval (Div m n) = case eval n of 
                    Just 0 -> Nothing
                    ev_n   -> (/) <$> eval m <*> ev_n   
-
-
-numsInExpr :: Expr -> [Double]
-numsInExpr (Const n) = [n]
-numsInExpr (Add m n) = numsInExpr m ++ numsInExpr n
-numsInExpr (Mul m n) = numsInExpr m ++ numsInExpr n
-numsInExpr (Sub m n) = numsInExpr m ++ numsInExpr n
-numsInExpr (Div m n) = numsInExpr m ++ numsInExpr n
                    
 
 -- Ordered from lowest to highest
