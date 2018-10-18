@@ -2,6 +2,7 @@
 module Game24Solutions where 
 
 
+-- data structure representing all possible basic arithmetic expressions
 data Expr = Const Double
           | Add Expr Expr 
           | Mul Expr Expr
@@ -10,6 +11,7 @@ data Expr = Const Double
           deriving (Show)
 
 
+-- evaluates an expression tree in the obvious way. divide by 0 results in Nothing (the value)
 eval :: Expr -> Maybe Double 
 eval (Const n) = Just n
 eval (Add m n) = (+) <$> eval m <*> eval n
@@ -20,15 +22,18 @@ eval (Div m n) = case eval n of
                    ev_n   -> (/) <$> eval m <*> ev_n   
                    
 
--- Ordered from lowest to highest
+-- all possible unordered quads of naturals from 0 to 9 inclusive, 
+--  numbers in quad ordered from lowest to highest
 allStarts :: [(Double, Double, Double, Double)]
 allStarts = [(i, j, k, l) | i <- [0..9], j <- [i..9], k <- [j..9], l <- [k..9]]
 
 
+-- all quads in allStarts that can produce 24 via basic arithmetics
 possibleStarts :: [(Double, Double, Double, Double)]
 possibleStarts = filter get24 allStarts
 
 
+-- all quads in allStarts that's not in possibleStarts
 impossibleStarts :: [(Double, Double, Double, Double)]
 impossibleStarts = filter (not . get24) allStarts
 
