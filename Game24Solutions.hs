@@ -65,7 +65,6 @@ generalPossibleStarts n = filter (any (== (Just n)) . map eval . genExprs) allSt
 get24 :: (Double, Double, Double, Double) -> Bool
 get24 = any eq24 . genExprs
 
-
 -- Checks if a tree evaluates to (Just) 24
 eq24 :: Expr -> Bool
 eq24 = (== (Just 24)) . eval 
@@ -80,25 +79,31 @@ genExprs (i, j, k, l) =
     do  ((n1, n2), (n3, n4)) <- [((i, j), (k, l)), ((i, k), (j, l)), ((i, l), (j, k)), 
                                 ((j, k), (i, l)), ((j, l), (i, k)), ((k, l), (i, j))]
         -- Generates the result of trying every possible operation (n1 - n2 && n2 - n1, n1 / n2 && n2 / n1)
-        (expr1, m1, m2) <- [(Add (Const n1) (Const n2), n3, n4), 
-                            (Mul (Const n1) (Const n2), n3, n4), 
-                            (Sub (Const n1) (Const n2), n3, n4),
-                            (Sub (Const n2) (Const n1), n3, n4),
-                            (Div (Const n1) (Const n2), n3, n4),
-                            (Div (Const n2) (Const n1), n3, n4)]
+        (expr1, m1, m2) <- [(Add (Const n1) (Const n2), Const n3, Const n4), 
+                            (Mul (Const n1) (Const n2), Const n3, Const n4), 
+                            (Sub (Const n1) (Const n2), Const n3, Const n4),
+                            (Sub (Const n2) (Const n1), Const n3, Const n4),
+                            (Div (Const n1) (Const n2), Const n3, Const n4),
+                            (Div (Const n2) (Const n1), Const n3, Const n4)]
         -- Generates applying every operation on the result from above, and the third number
-        (expr2, m3) <- [(Add expr1 (Const m1), m2),
-                        (Mul expr1 (Const m1), m2),
-                        (Sub expr1 (Const m1), m2),
-                        (Sub (Const m1) expr1, m2),
-                        (Div expr1 (Const m1), m2),
-                        (Div (Const m1) expr1, m2)]
+        (expr2, expr3) <- [(Add expr1 m1, m2),
+                           (Mul expr1 m1, m2),
+                           (Sub expr1 m1, m2),
+                           (Sub m1 expr1, m2),
+                           (Div expr1 m1, m2),
+                           (Div m1 expr1, m2),
+                           (expr1, Add m1 m2),
+                           (expr1, Mul m1 m2),
+                           (expr1, Sub m1 m2),
+                           (expr1, Sub m2 m1),
+                           (expr1, Div m1 m2),
+                           (expr1, Div m2 m1)]
         -- Generates the result of applying all the operations on the result from above 
         --   with the final number, final list
-        [Add expr2 (Const m3),
-         Mul expr2 (Const m3),
-         Sub expr2 (Const m3),
-         Sub (Const m3) expr2,
-         Div expr2 (Const m3),
-         Div (Const m3) expr2]
+        [Add expr2 expr3,
+         Mul expr2 expr3,
+         Sub expr2 expr3,
+         Sub expr3 expr2,
+         Div expr2 expr3,
+         Div expr3 expr2]
        
