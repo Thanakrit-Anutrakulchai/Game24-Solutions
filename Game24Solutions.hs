@@ -32,11 +32,9 @@ allStarts = [(i, j, k, l) | i <- [0..9], j <- [i..9], k <- [j..9], l <- [k..9]]
 possibleStarts :: [(Double, Double, Double, Double)]
 possibleStarts = filter get24 allStarts
 
-
 -- all quads in allStarts that's not in possibleStarts
 impossibleStarts :: [(Double, Double, Double, Double)]
 impossibleStarts = filter (not . get24) allStarts
-
 
 -- Generates every single possible expression trees using all possible quads
 -- Some expressions are repeated
@@ -45,21 +43,17 @@ allAttempts =
     do  quad <- allStarts
         genExprs quad
 
-
 -- All expression trees in allAttempts that evaluates to 24
 passedAttempts :: [Expr]
 passedAttempts = filter eq24 allAttempts
-
 
 -- Gets all expression trees made from a specific quad the that evaluates to 24
 getSolutions :: (Double, Double, Double, Double) -> [Expr]
 getSolutions = filter eq24 . genExprs 
 
-
 -- Lists all possible quads that can generate an expression tree that evaluates to n
 generalPossibleStarts :: Double -> [(Double, Double, Double, Double)]
 generalPossibleStarts n = filter (any (== (Just n)) . map eval . genExprs) allStarts
-
 
 -- Check if the quad generates at least one expression tree that evaluates to 24
 get24 :: (Double, Double, Double, Double) -> Bool
@@ -92,6 +86,12 @@ genExprs (i, j, k, l) =
                            (Sub m1 expr1, m2),
                            (Div expr1 m1, m2),
                            (Div m1 expr1, m2),
+                           (Add expr1 m2, m1),
+                           (Mul expr1 m2, m1),
+                           (Sub expr1 m2, m1),
+                           (Sub m2 expr1, m1),
+                           (Div expr1 m2, m1),
+                           (Div m2 expr1, m1),                           
                            (expr1, Add m1 m2),
                            (expr1, Mul m1 m2),
                            (expr1, Sub m1 m2),
@@ -106,4 +106,3 @@ genExprs (i, j, k, l) =
          Sub expr3 expr2,
          Div expr2 expr3,
          Div expr3 expr2]
-       
