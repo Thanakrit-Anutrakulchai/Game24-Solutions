@@ -2,6 +2,8 @@
 {-# LANGUAGE InstanceSigs #-}
 module Game24Solutions where 
 
+import Data.List (uncons)
+
 import Test.QuickCheck ( Arbitrary(arbitrary), Gen, frequency )
 
 -- data structure representing all possible basic arithmetic expressions
@@ -23,6 +25,16 @@ instance Arbitrary Expr where
         ,   (1, Div <$> arbitrary <*> arbitrary)
         ]
 
+-- lists all operations allowed between two expressions
+-- Sub,Div are listed twice to account for non-commutativity
+allOps :: Expr -> Expr -> [Expr]
+allOps exprL exprR = [ Add exprL exprR
+                     , Mul exprL exprR
+                     , Sub exprL exprR
+                     , Sub exprR exprL
+                     , Div exprL exprR
+                     , Div exprR exprL
+                     ]
 
 -- evaluates an expression tree in the obvious way. Division by 0 results in Nothing
 eval :: Expr -> Maybe Double 
@@ -67,13 +79,35 @@ getSolutions = filter eq24 . genExprs
 generalPossibleStarts :: Double -> [(Double, Double, Double, Double)]
 generalPossibleStarts n = filter (any (== Just n) . map eval . genExprs) allStarts
 
--- Check if the quad generates at least one expression tree that evaluates to 24
+-- Checks if the quad generates at least one expression tree that evaluates to 24
 get24 :: (Double, Double, Double, Double) -> Bool
 get24 = any eq24 . genExprs
 
 -- Checks if a tree evaluates to (Just) 24
 eq24 :: Expr -> Bool
 eq24 = (== Just 24) . eval 
+
+-- Lists all ways to choose k elements by position from a list and also return the rest
+choose :: Int -> [a] -> [([a], [a])]
+choose k _ | k < 0 = error $ "Expected a non-negative integer but given: " ++ show k
+choose 0 ls = [([], ls)]
+choose k ls =
+    case uncons ls of
+        Nothing -> []
+        Just (i, rest) -> 
+            do
+                (chosens, leftovers) <- choose k rest 
+                return (chosens, i:leftovers) 
+            ++ do
+                (chosens, leftovers) <- choose (k - 1) rest
+                return (i : chosens, leftovers)
+
+-- Lists all ways to choose 2 elements by position from a list and also return the rest
+-- This is here for more type safety in genExprs.
+chooseTwo :: [a] -> [(a, a, [a])]
+chooseTwo ls = do
+    ([x, y], rest) <- choose 2 ls
+    return (x, y, rest)
 
 
 -- Generates all possible expression trees from a specific quad
@@ -82,40 +116,14 @@ genExprs :: (Double, Double, Double, Double) -> [Expr]
 genExprs (i, j, k, l) =
         -- Generates every possible way to choose a pair of numbers to perform an 
         --   operation on while separating the rest
-    do  ((n1, n2), (n3, n4)) <- [((i, j), (k, l)), ((i, k), (j, l)), ((i, l), (j, k)), 
-                                ((j, k), (i, l)), ((j, l), (i, k)), ((k, l), (i, j))]
-        -- Generates the result of trying every possible operation 
-        --   since -,/ are not commutative, need cases for n1 - n2 && n2 - n1, n1 / n2 && n2 / n1
-        (expr1, m1, m2) <- [(Add (Const n1) (Const n2), Const n3, Const n4), 
-                            (Mul (Const n1) (Const n2), Const n3, Const n4), 
-                            (Sub (Const n1) (Const n2), Const n3, Const n4),
-                            (Sub (Const n2) (Const n1), Const n3, Const n4),
-                            (Div (Const n1) (Const n2), Const n3, Const n4),
-                            (Div (Const n2) (Const n1), Const n3, Const n4)]
-        -- applies every operation on the result from above, and the third number
-        (expr2, expr3) <- [(Add expr1 m1, m2),
-                           (Mul expr1 m1, m2),
-                           (Sub expr1 m1, m2),
-                           (Sub m1 expr1, m2),
-                           (Div expr1 m1, m2),
-                           (Div m1 expr1, m2),
-                           (Add expr1 m2, m1),
-                           (Mul expr1 m2, m1),
-                           (Sub expr1 m2, m1),
-                           (Sub m2 expr1, m1),
-                           (Div expr1 m2, m1),
-                           (Div m2 expr1, m1),                           
-                           (expr1, Add m1 m2),
-                           (expr1, Mul m1 m2),
-                           (expr1, Sub m1 m2),
-                           (expr1, Sub m2 m1),
-                           (expr1, Div m1 m2),
-                           (expr1, Div m2 m1)]
-        -- Generates the result of applying all the operations on the result from above 
-        --   with the final number, final list
-        [Add expr2 expr3,
-         Mul expr2 expr3,
-         Sub expr2 expr3,
-         Sub expr3 expr2,
-         Div expr2 expr3,
-         Div expr3 expr2]
+    do  (n1, n2, rest) <- chooseTwo $ map Const [i, j, k, l]
+        expr1 <- allOps n1 n2
+        -- applies every operation on two of the three numbers from above
+        (m1, m2, finalExpr) <- chooseTwo (expr1 : rest)
+        expr2 <- allOps m1 m2
+        case finalExpr of
+            [e] -> allOps expr2 e
+            _   -> error $
+                    "An unexpected number of subexpressions were generated in genExprs.\n"
+                    ++ "These subexpressions were generated:"
+                    ++ (([show expr1, show expr2] ++ map show finalExpr) >>= ("\n\n\t"++))
