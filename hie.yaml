@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "app/Main.hs"
+      component: "Game24-Solutions:exe:Game24-Solutions"
+
+    - path: "app/Game24Solutions.hs"
+      component: "Game24-Solutions:exe:Game24-Solutions"
+
+    - path: "app/Tests.hs"
+      component: "Game24-Solutions:exe:Game24-Solutions"
